@@ -10,5 +10,10 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false
   }
 });
+

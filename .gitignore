@@ -10,7 +10,20 @@ venv/
 
 # env
 .env
+.env.local
+.env.*.local
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Vercel
+.vercel
+.vercel/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+

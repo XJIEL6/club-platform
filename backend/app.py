@@ -286,4 +286,6 @@ def assistant_chat():
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    # Only run development server if NOT on Vercel
+    if os.getenv("VERCEL") != "1":
+        app.run(host="0.0.0.0", port=port, debug=True)
