@@ -88,6 +88,86 @@ const SCENARIO_CARDS = [
   }
 ];
 
+const HOBBY_QUESTIONS = [
+  {
+    id: 'hobby-1',
+    type: 'hobby',
+    title: '课余时间你更想做什么？',
+    description: '选出你最愿意长期投入的一项',
+    emoji: '🧭',
+    options: [
+      {
+        label: '组织线下活动并带动大家参与',
+        dimensions: ['leadership', 'sociability'],
+        interest: '活动组织'
+      },
+      {
+        label: '拍摄剪辑、做海报或内容创作',
+        dimensions: ['creativity', 'actionability'],
+        interest: '内容创作'
+      },
+      {
+        label: '钻研技术工具，做小程序或数据分析',
+        dimensions: ['analytical', 'creativity'],
+        interest: '技术探索'
+      }
+    ]
+  },
+  {
+    id: 'hobby-2',
+    type: 'hobby',
+    title: '你最享受哪种社团氛围？',
+    description: '选一个你最有归属感的场景',
+    emoji: '🌟',
+    options: [
+      {
+        label: '大家分工明确，目标清晰，推进高效',
+        dimensions: ['actionability', 'leadership'],
+        interest: '项目执行'
+      },
+      {
+        label: '彼此支持、氛围温暖、重视陪伴成长',
+        dimensions: ['empathy', 'sociability'],
+        interest: '互助陪伴'
+      },
+      {
+        label: '持续尝试新想法，鼓励探索和挑战',
+        dimensions: ['adaptability', 'resilience'],
+        interest: '创新挑战'
+      }
+    ]
+  },
+  {
+    id: 'hobby-3',
+    type: 'hobby',
+    title: '如果要选一个长期方向，你会更偏向？',
+    description: '选择你最希望深耕的方向',
+    emoji: '🚀',
+    options: [
+      {
+        label: '对外沟通、联络资源、拓展合作',
+        dimensions: ['sociability', 'adaptability'],
+        interest: '外联沟通'
+      },
+      {
+        label: '策划方案、统筹进度、推动落地',
+        dimensions: ['leadership', 'actionability'],
+        interest: '策划统筹'
+      },
+      {
+        label: '观察需求、解决问题、优化细节',
+        dimensions: ['analytical', 'resilience'],
+        interest: '问题解决'
+      }
+    ]
+  }
+];
+
+const QUESTION_STEPS = [
+  ...SCENARIO_CARDS.map((card) => ({ ...card, type: 'scenario' })),
+  ...HOBBY_QUESTIONS
+];
+
 // 人格类型映射（根据维度组合）
 const PERSONALITY_TYPES = {
   'innovator': { name: '创新者', desc: '富有创意和行动力，喜欢尝试新事物' },
@@ -121,24 +201,44 @@ export default function QuestionnairePage() {
   const [userId, setUserId] = useState('');
   const [matchedClubs, setMatchedClubs] = useState([]);
   const navigate = useNavigate();
+  const currentStep = QUESTION_STEPS[currentCard];
+  const maxDimensionScore = Math.max(1, ...Object.values(dimensions));
+
+  const goToNextQuestion = () => {
+    if (currentCard < QUESTION_STEPS.length - 1) {
+      setCurrentCard(currentCard + 1);
+    } else {
+      // 完成答题，进入盲盒幕
+      setStage('unboxing');
+    }
+  };
 
   // 卡片应答
   const handleCardResponse = (isYes) => {
-    if (isYes) {
-      const card = SCENARIO_CARDS[currentCard];
+    if (isYes && currentStep?.type === 'scenario') {
       setDimensions(prev => ({
         ...prev,
-        [card.dimensions[0]]: prev[card.dimensions[0]] + 1,
-        [card.dimensions[1]]: prev[card.dimensions[1]] + 1
+        [currentStep.dimensions[0]]: prev[currentStep.dimensions[0]] + 1,
+        [currentStep.dimensions[1]]: prev[currentStep.dimensions[1]] + 1
       }));
     }
 
-    if (currentCard < SCENARIO_CARDS.length - 1) {
-      setCurrentCard(currentCard + 1);
-    } else {
-      // 完成卡片，进入盲盒幕
-      setStage('unboxing');
-    }
+    goToNextQuestion();
+  };
+
+  const handleHobbySelect = (option) => {
+    setDimensions((prev) => ({
+      ...prev,
+      [option.dimensions[0]]: prev[option.dimensions[0]] + 1,
+      [option.dimensions[1]]: prev[option.dimensions[1]] + 1
+    }));
+
+    setForm((prev) => ({
+      ...prev,
+      interests: Array.from(new Set([...prev.interests, option.interest]))
+    }));
+
+    goToNextQuestion();
   };
 
   // 计算人格类型
@@ -218,9 +318,9 @@ export default function QuestionnairePage() {
         <div className="matching-stage cards-stage">
           <div className="stage-header">
             <h2>开始兴趣匹配</h2>
-            <p>10 个场景，认识你的性格特质</p>
+            <p>{QUESTION_STEPS.length} 道问题，认识你的性格特质与兴趣偏好</p>
             <div className="progress-dots">
-              {SCENARIO_CARDS.map((_, idx) => (
+              {QUESTION_STEPS.map((_, idx) => (
                 <div
                   key={idx}
                   className={`dot ${idx === currentCard ? 'active' : ''} ${idx < currentCard ? 'done' : ''}`}
@@ -231,30 +331,46 @@ export default function QuestionnairePage() {
 
           <div className="cards-container">
             <div className="scenario-card">
-              <div className="card-emoji">{SCENARIO_CARDS[currentCard].emoji}</div>
-              <h3>{SCENARIO_CARDS[currentCard].title}</h3>
-              <p>{SCENARIO_CARDS[currentCard].description}</p>
-              <div className="dimension-tags">
-                {SCENARIO_CARDS[currentCard].dimensions.map((dim) => (
-                  <span key={dim} className="dim-tag" style={{ background: PERSONALITY_DIMENSIONS[dim].color }}>
-                    {PERSONALITY_DIMENSIONS[dim].label}
-                  </span>
-                ))}
-              </div>
+              <div className="card-emoji">{currentStep.emoji}</div>
+              <h3>{currentStep.title}</h3>
+              <p>{currentStep.description}</p>
+              {currentStep.type === 'scenario' ? (
+                <div className="dimension-tags">
+                  {currentStep.dimensions.map((dim) => (
+                    <span key={dim} className="dim-tag" style={{ background: PERSONALITY_DIMENSIONS[dim].color }}>
+                      {PERSONALITY_DIMENSIONS[dim].label}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="hobby-options">
+                  {currentStep.options.map((option) => (
+                    <button
+                      key={option.label}
+                      className="hobby-option-btn"
+                      onClick={() => handleHobbySelect(option)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="cards-actions">
-            <button className="btn ghost large" onClick={() => handleCardResponse(false)}>
-              不太符合 →
-            </button>
-            <button className="btn primary large" onClick={() => handleCardResponse(true)}>
-              ← 很符合我
-            </button>
-          </div>
+          {currentStep.type === 'scenario' ? (
+            <div className="cards-actions">
+              <button className="btn ghost large" onClick={() => handleCardResponse(false)}>
+                不太符合 →
+              </button>
+              <button className="btn primary large" onClick={() => handleCardResponse(true)}>
+                ← 很符合我
+              </button>
+            </div>
+          ) : null}
 
           <p className="stage-hint">
-            {currentCard + 1} / {SCENARIO_CARDS.length}
+            {currentCard + 1} / {QUESTION_STEPS.length}
           </p>
         </div>
       )}
@@ -318,7 +434,7 @@ export default function QuestionnairePage() {
                       <div
                         className="bar-fill"
                         style={{
-                          width: `${(value / 10) * 100}%`,
+                          width: `${Math.round((value / maxDimensionScore) * 100)}%`,
                           background: PERSONALITY_DIMENSIONS[key].color
                         }}
                       />

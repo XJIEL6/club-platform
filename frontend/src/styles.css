@@ -833,6 +833,34 @@ select {
   font-weight: 600;
 }
 
+.hobby-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.hobby-option-btn {
+  width: 100%;
+  border: 1px solid #d8e0ef;
+  border-radius: 10px;
+  background: #fff;
+  color: #2a3858;
+  text-align: left;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hobby-option-btn:hover {
+  border-color: #b7c8f0;
+  background: #f5f8ff;
+  transform: translateY(-1px);
+}
+
 .cards-actions {
   display: flex;
   gap: 16px;
