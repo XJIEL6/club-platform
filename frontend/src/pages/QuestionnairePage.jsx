@@ -163,10 +163,92 @@ const HOBBY_QUESTIONS = [
   }
 ];
 
+const INTEREST_CARD_QUESTIONS = [
+  {
+    id: 'interest-cards-1',
+    type: 'interest-grid',
+    title: '这些兴趣活动里，你最想参加哪些？',
+    description: '可多选，至少选 1 项',
+    emoji: '🃏',
+    options: [
+      { label: '桌游', dimensions: ['analytical', 'sociability'], interest: '桌游' },
+      { label: '羽毛球', dimensions: ['actionability', 'resilience'], interest: '羽毛球' },
+      { label: '天文', dimensions: ['analytical', 'adaptability'], interest: '天文' },
+      { label: 'AI编程', dimensions: ['creativity', 'analytical'], interest: 'AI编程' },
+      { label: '摄影外拍', dimensions: ['creativity', 'sociability'], interest: '摄影' },
+      { label: '公益服务', dimensions: ['empathy', 'actionability'], interest: '公益志愿' }
+    ]
+  },
+  {
+    id: 'interest-cards-2',
+    type: 'interest-grid',
+    title: '你希望在社团中长期提升哪些方向？',
+    description: '可多选，至少选 1 项',
+    emoji: '🌌',
+    options: [
+      { label: '组织活动', dimensions: ['leadership', 'actionability'], interest: '组织协作' },
+      { label: '演讲主持', dimensions: ['leadership', 'sociability'], interest: '主持' },
+      { label: '视频剪辑', dimensions: ['creativity', 'actionability'], interest: '影视制作' },
+      { label: '科研探索', dimensions: ['analytical', 'resilience'], interest: '学术科研' },
+      { label: '音乐舞台', dimensions: ['sociability', 'creativity'], interest: '音乐演奏' },
+      { label: '户外挑战', dimensions: ['adaptability', 'resilience'], interest: '户外探险' }
+    ]
+  }
+];
+
 const QUESTION_STEPS = [
   ...SCENARIO_CARDS.map((card) => ({ ...card, type: 'scenario' })),
-  ...HOBBY_QUESTIONS
+  ...HOBBY_QUESTIONS,
+  ...INTEREST_CARD_QUESTIONS
 ];
+
+function refineClubsByInterests(clubs, interests) {
+  if (!Array.isArray(clubs) || !clubs.length || !Array.isArray(interests) || !interests.length) {
+    return clubs || [];
+  }
+
+  const keywordMap = {
+    桌游: ['桌游', '策略', '辩论', '演讲'],
+    羽毛球: ['羽毛球', '球类运动', '运动'],
+    天文: ['天文', '科研', '探索', '学术'],
+    AI编程: ['人工智能', '编程开发', '技术', '模型'],
+    摄影: ['摄影', '影视', '视觉'],
+    公益志愿: ['公益', '志愿', '服务'],
+    组织协作: ['组织协作', '策划', '统筹'],
+    主持: ['主持', '辩论', '演讲'],
+    影视制作: ['影视制作', '剪辑', '内容'],
+    学术科研: ['学术科研', '科研', '论文'],
+    音乐演奏: ['音乐演奏', '舞台', '演出'],
+    户外探险: ['户外探险', '户外', '挑战']
+  };
+
+  const selectedKeywords = interests
+    .flatMap((interest) => keywordMap[interest] || [interest])
+    .map((item) => String(item).toLowerCase());
+
+  return [...clubs]
+    .map((club) => {
+      const blob = [
+        club.name,
+        club.description,
+        ...(club.tags || []),
+        ...(club.interest_activities || []),
+        ...(club.past_activities || [])
+      ].join(' ').toLowerCase();
+
+      const interestScore = selectedKeywords.reduce((sum, keyword) => {
+        return blob.includes(keyword) ? sum + 8 : sum;
+      }, 0);
+
+      const baseScore = Number(club.matchScore) || 0;
+      return {
+        ...club,
+        matchScore: Math.min(99, baseScore + interestScore),
+        interestScore
+      };
+    })
+    .sort((a, b) => (b.matchScore + b.interestScore) - (a.matchScore + a.interestScore));
+}
 
 // 人格类型映射（根据维度组合）
 const PERSONALITY_TYPES = {
@@ -200,6 +282,7 @@ export default function QuestionnairePage() {
   const [submitting, setSubmitting] = useState(false);
   const [userId, setUserId] = useState('');
   const [matchedClubs, setMatchedClubs] = useState([]);
+  const [selectedInterestCards, setSelectedInterestCards] = useState([]);
   const navigate = useNavigate();
   const currentStep = QUESTION_STEPS[currentCard];
   const maxDimensionScore = Math.max(1, ...Object.values(dimensions));
@@ -241,6 +324,47 @@ export default function QuestionnairePage() {
     goToNextQuestion();
   };
 
+  const toggleInterestCard = (option) => {
+    setSelectedInterestCards((prev) => {
+      const exists = prev.some((item) => item.label === option.label);
+      if (exists) {
+        return prev.filter((item) => item.label !== option.label);
+      }
+      return [...prev, option];
+    });
+  };
+
+  const confirmInterestCards = () => {
+    if (!selectedInterestCards.length) return;
+
+    const dimensionDelta = selectedInterestCards.reduce((acc, option) => {
+      const next = { ...acc };
+      option.dimensions.forEach((dim) => {
+        next[dim] = (next[dim] || 0) + 1;
+      });
+      return next;
+    }, {});
+
+    setDimensions((prev) => {
+      const merged = { ...prev };
+      Object.entries(dimensionDelta).forEach(([dim, delta]) => {
+        merged[dim] += delta;
+      });
+      return merged;
+    });
+
+    setForm((prev) => ({
+      ...prev,
+      interests: Array.from(new Set([
+        ...prev.interests,
+        ...selectedInterestCards.map((item) => item.interest)
+      ]))
+    }));
+
+    setSelectedInterestCards([]);
+    goToNextQuestion();
+  };
+
   // 计算人格类型
   const calculatePersonality = () => {
     const sorted = Object.entries(dimensions).sort((a, b) => b[1] - a[1]);
@@ -269,7 +393,8 @@ export default function QuestionnairePage() {
 
     fetchPersonalityMatch(type, dimensions)
       .then((res) => {
-        setMatchedClubs(res.matchedClubs || []);
+        const refined = refineClubsByInterests(res.matchedClubs || [], form.interests);
+        setMatchedClubs(refined);
       })
       .catch((err) => {
         console.error('获取匹配社团失败:', err);
@@ -343,17 +468,38 @@ export default function QuestionnairePage() {
                   ))}
                 </div>
               ) : (
-                <div className="hobby-options">
-                  {currentStep.options.map((option) => (
-                    <button
-                      key={option.label}
-                      className="hobby-option-btn"
-                      onClick={() => handleHobbySelect(option)}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+                currentStep.type === 'hobby' ? (
+                  <div className="hobby-options">
+                    {currentStep.options.map((option) => (
+                      <button
+                        key={option.label}
+                        className="hobby-option-btn"
+                        onClick={() => handleHobbySelect(option)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <div className="interest-float-grid">
+                      {currentStep.options.map((option, idx) => {
+                        const selected = selectedInterestCards.some((item) => item.label === option.label);
+                        return (
+                          <button
+                            key={option.label}
+                            className={`interest-float-card ${selected ? 'selected' : ''}`}
+                            style={{ '--idx': idx }}
+                            onClick={() => toggleInterestCard(option)}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="interest-select-hint">已选 {selectedInterestCards.length} 项</p>
+                  </>
+                )
               )}
             </div>
           </div>
@@ -365,6 +511,12 @@ export default function QuestionnairePage() {
               </button>
               <button className="btn primary large" onClick={() => handleCardResponse(true)}>
                 ← 很符合我
+              </button>
+            </div>
+          ) : currentStep.type === 'interest-grid' ? (
+            <div className="cards-actions">
+              <button className="btn primary large" onClick={confirmInterestCards} disabled={!selectedInterestCards.length}>
+                确认选择并下一题
               </button>
             </div>
           ) : null}
