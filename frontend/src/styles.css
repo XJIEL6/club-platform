@@ -463,6 +463,23 @@ select {
   color: #4953d9;
 }
 
+.progress-item-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.progress-cancel-btn {
+  border-color: #f2c6d1;
+  color: #b8325a;
+  background: #fff6f8;
+}
+
+.progress-cancel-btn:hover {
+  border-color: #e58aa1;
+  background: #ffe9ef;
+}
+
 .profile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

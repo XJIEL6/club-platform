@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
 function formatTime(value) {
   try {
@@ -9,15 +9,42 @@ function formatTime(value) {
 }
 
 export default function RegistrationProgressPage() {
-  const records = useMemo(() => {
+  const [records, setRecords] = useState([]);
+
+  const loadRecords = () => {
     try {
       const raw = localStorage.getItem('club_applications');
       const list = raw ? JSON.parse(raw) : [];
-      return Array.isArray(list) ? list : [];
+      setRecords(Array.isArray(list) ? list : []);
     } catch {
-      return [];
+      setRecords([]);
     }
+  };
+
+  useEffect(() => {
+    loadRecords();
+
+    const onUpdated = () => loadRecords();
+    window.addEventListener('club-progress-updated', onUpdated);
+    window.addEventListener('storage', onUpdated);
+
+    return () => {
+      window.removeEventListener('club-progress-updated', onUpdated);
+      window.removeEventListener('storage', onUpdated);
+    };
   }, []);
+
+  const handleCancel = (record) => {
+    const shouldCancel = window.confirm(`确认取消报名：${record.clubName}？`);
+    if (!shouldCancel) return;
+
+    const next = records.filter(
+      (item) => !(item.clubId === record.clubId && item.mode === record.mode && item.createdAt === record.createdAt)
+    );
+    localStorage.setItem('club_applications', JSON.stringify(next));
+    setRecords(next);
+    window.dispatchEvent(new Event('club-progress-updated'));
+  };
 
   return (
     <section>
@@ -32,12 +59,15 @@ export default function RegistrationProgressPage() {
       ) : (
         <div className="progress-list">
           {records.map((item) => (
-            <article className="progress-item" key={`${item.clubId}-${item.mode}`}>
+            <article className="progress-item" key={`${item.clubId}-${item.mode}-${item.createdAt}`}>
               <h3>{item.clubName}</h3>
               <p>加入方式：{item.mode}</p>
               <p>意向岗位：{item.targetRole}</p>
               <p>提交时间：{formatTime(item.createdAt)}</p>
               <p className="status-chip">状态：{item.status}</p>
+              <div className="progress-item-actions">
+                <button className="btn ghost progress-cancel-btn" onClick={() => handleCancel(item)}>取消报名</button>
+              </div>
             </article>
           ))}
         </div>
