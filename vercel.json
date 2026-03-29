@@ -5,11 +5,6 @@
   "env": {
     "VITE_API_BASE_URL": "/api"
   },
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 30
-    }
-  },
   "routes": [
     {
       "src": "/api/(.*)",
