@@ -4,6 +4,13 @@
 
 复制根目录 `.env.example` 为 `.env`，并填写以下值：
 
+如果你手里已有其他命名方式（例如 `SUPABASE_KEY`），请按下面映射统一：
+
+- `SUPABASE_KEY` -> `SUPABASE_SERVICE_ROLE_KEY`（推荐）
+- `SUPABASE_SERVICE_ROLE_KEY` 与 `SUPABASE_KEY` 二选一即可，优先使用 `SUPABASE_SERVICE_ROLE_KEY`
+- `DATABASE_URL` 当前版本不直接使用（可保留，供后续扩展）
+- `GITHUB_TOKEN` 不是运行时变量，不需要配置到 Vercel
+
 - `VITE_API_BASE_URL`: 前端 API 基地址
   - 本地开发推荐：`/api`
   - 线上部署推荐：`/api`

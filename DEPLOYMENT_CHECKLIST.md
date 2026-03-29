@@ -49,9 +49,14 @@
 VITE_API_BASE_URL=/api         # ✓ 已配置
 SUPABASE_URL=???               # 如果使用 Supabase，填入你的 URL
 SUPABASE_SERVICE_ROLE_KEY=???  # 如果使用 Supabase，填入密钥
+SUPABASE_KEY=???               # 可选别名（未填 SERVICE_ROLE_KEY 时可用）
 OPENAI_API_KEY=???             # 如果使用 AI 功能，填入密钥
 OPENAI_MODEL=gpt-4o-mini      # 默认值
+DATABASE_URL=???               # 可选，当前版本不直接使用
 ```
+
+不需要配置到 Vercel：
+- `GITHUB_TOKEN`（仅用于 CI/脚本，不是应用运行时配置）
 
 ### 2. GitHub 准备
 

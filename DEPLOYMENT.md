@@ -21,6 +21,8 @@ VITE_API_BASE_URL=/api
 # Supabase 配置（可选，如果项目使用 Supabase）
 SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# 如果你当前使用的是 SUPABASE_KEY 命名，也可以配置：
+# SUPABASE_KEY=your_key
 
 # OpenAI 配置（如果使用 AI 推荐功能）
 OPENAI_API_KEY=your_openai_api_key
@@ -28,7 +30,14 @@ OPENAI_MODEL=gpt-4o-mini
 
 # 服务器配置
 FLASK_ENV=production
+
+# 可选（当前应用不直接使用）
+DATABASE_URL=postgresql://...
 ```
+
+说明：
+- 代码优先读取 `SUPABASE_SERVICE_ROLE_KEY`，未设置时会回退读取 `SUPABASE_KEY`。
+- `GITHUB_TOKEN` 不属于应用运行时变量，不建议放在 Vercel 项目环境变量中。
 
 ### 步骤 2: 连接 GitHub 仓库
 

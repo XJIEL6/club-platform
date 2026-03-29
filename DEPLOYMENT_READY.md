@@ -60,9 +60,14 @@ git push origin main
 # 必需的环境变量
 SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_ROLE_KEY=your_key
+SUPABASE_KEY=your_key (可选别名)
 OPENAI_API_KEY=your_key (如需要)
+VITE_API_BASE_URL=/api
 ```
 
+说明：
+- 当前代码优先读取 `SUPABASE_SERVICE_ROLE_KEY`，否则回退读取 `SUPABASE_KEY`。
+- `GITHUB_TOKEN` 不需要放到 Vercel 运行时环境变量中。
 ### 4. 部署
 - 点击 "Deploy"
 - 等待 Vercel 自动构建和部署

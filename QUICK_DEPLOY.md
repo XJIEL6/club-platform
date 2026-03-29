@@ -17,8 +17,12 @@ git push origin main
 ```env
 SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=ey...
+SUPABASE_KEY=ey... (可选别名)
 OPENAI_API_KEY=sk-proj-... (可选)
+VITE_API_BASE_URL=/api
 ```
+
+注意：`GITHUB_TOKEN` 不需要配置到 Vercel 环境变量。
 
 ## Step 3️⃣: 点击 Deploy 并等待完成 ✨
 
